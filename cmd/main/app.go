@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xlzpm/internal/config"
 	"github.com/xlzpm/internal/user"
+	"github.com/xlzpm/internal/user/db"
+	"github.com/xlzpm/pkg/client/mongodb"
 	"github.com/xlzpm/pkg/logging"
 )
 
@@ -21,6 +24,17 @@ func main() {
 	router := gin.Default()
 
 	cfg := config.GetGonfig()
+
+	cfgMongo := cfg.MongoDB
+	mongoDBClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host,
+		cfgMongo.Port, cfgMongo.Username, cfgMongo.Password,
+		cfgMongo.Database, cfgMongo.AuthDB)
+	if err != nil {
+		panic(err)
+	}
+
+	storage := db.NewStorage(mongoDBClient, cfg.MongoDB.Collection, logger)
+	fmt.Println(storage)
 
 	logger.Info("register user handler")
 	handler := user.NewHandler(logger)
