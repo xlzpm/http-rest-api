@@ -4,6 +4,7 @@ app
 # logs
 /logs
 
-
+#config
+/config.yml
 
 
