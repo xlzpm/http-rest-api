@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -10,8 +11,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	db_author "github.com/xlzpm/internal/author/db"
 	"github.com/xlzpm/internal/config"
 	"github.com/xlzpm/internal/user"
+	"github.com/xlzpm/pkg/client/postgresql"
 	"github.com/xlzpm/pkg/logging"
 )
 
@@ -21,6 +24,22 @@ func main() {
 	router := gin.Default()
 
 	cfg := config.GetGonfig()
+
+	postgreSQLClient, err := postgresql.NewClient(context.TODO(), 3, cfg.Storage)
+	if err != nil {
+		logger.Fatalf("%v", err)
+	}
+
+	repository := db_author.NewRepository(postgreSQLClient, logger)
+
+	all, err := repository.FindAll(context.TODO())
+	if err != nil {
+		logger.Fatalf("%v", err)
+	}
+
+	for _, auth := range all {
+		logger.Infof("%v", auth)
+	}
 
 	logger.Info("register user handler")
 	handler := user.NewHandler(logger)
