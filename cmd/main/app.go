@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	db_author "github.com/xlzpm/internal/author/db"
+	db_book "github.com/xlzpm/internal/book/db"
 	"github.com/xlzpm/internal/config"
 	"github.com/xlzpm/internal/user"
 	"github.com/xlzpm/pkg/client/postgresql"
@@ -30,15 +30,15 @@ func main() {
 		logger.Fatalf("%v", err)
 	}
 
-	repository := db_author.NewRepository(postgreSQLClient, logger)
+	repository := db_book.NewRepository(postgreSQLClient, logger)
 
 	all, err := repository.FindAll(context.TODO())
 	if err != nil {
 		logger.Fatalf("%v", err)
 	}
 
-	for _, auth := range all {
-		logger.Infof("%v", auth)
+	for _, book := range all {
+		logger.Infof("%v", book)
 	}
 
 	logger.Info("register user handler")
