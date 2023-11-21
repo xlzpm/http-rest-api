@@ -1,4 +1,4 @@
-package db_author
+package author_db
 
 import (
 	"context"
@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgconn"
-	"github.com/xlzpm/internal/author"
+	"github.com/xlzpm/internal/author/model"
+	"github.com/xlzpm/internal/author/storage"
 	"github.com/xlzpm/pkg/client/postgresql"
 	"github.com/xlzpm/pkg/logging"
 )
@@ -21,7 +23,7 @@ func formatQuery(q string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(q, "\t", ""), "\n", " ")
 }
 
-func (r *repository) Create(ctx context.Context, author *author.Author) error {
+func (r *repository) Create(ctx context.Context, author *model.Author) error {
 	q := `INSERT INTO author 
 				(name) 
 		  VALUES 
@@ -46,22 +48,31 @@ func (r *repository) Create(ctx context.Context, author *author.Author) error {
 	return nil
 }
 
-func (r *repository) FindAll(ctx context.Context) ([]author.Author, error) {
-	q := `SELECT id, name FROM author`
+func (r *repository) FindAll(ctx context.Context, sortOptions storage.SortOptions) ([]model.Author, error) {
+	qb := sq.Select("id, name, age, is_alive, created_at").From("public.author")
 
-	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
+	if sortOptions != nil {
+		qb = qb.OrderBy(sortOptions.GetOrderBy())
+	}
 
-	rows, err := r.client.Query(ctx, q)
+	sql, i, err := qb.ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	authors := make([]author.Author, 0)
+	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(sql)))
+
+	rows, err := r.client.Query(ctx, sql, i...)
+	if err != nil {
+		return nil, err
+	}
+
+	authors := make([]model.Author, 0)
 
 	for rows.Next() {
-		var author author.Author
+		var author model.Author
 
-		err = rows.Scan(&author.ID, &author.Name)
+		err = rows.Scan(&author.ID, &author.Name, &author.Age, &author.IsAlive, &author.CreatedAT)
 		if err != nil {
 			return nil, err
 		}
@@ -76,21 +87,21 @@ func (r *repository) FindAll(ctx context.Context) ([]author.Author, error) {
 	return authors, nil
 }
 
-func (r *repository) FindOne(ctx context.Context, id string) (author.Author, error) {
+func (r *repository) FindOne(ctx context.Context, id string) (model.Author, error) {
 	q := `SELECT id, name FROM author WHERE id = $1`
 
 	r.logger.Trace(fmt.Sprintf("SQL Query: %s", formatQuery(q)))
 
-	var ath author.Author
+	var ath model.Author
 	err := r.client.QueryRow(ctx, q, id).Scan(&ath.ID, &ath.Name)
 	if err != nil {
-		return author.Author{}, err
+		return model.Author{}, err
 	}
 
 	return ath, nil
 }
 
-func (r *repository) Update(ctx context.Context, author author.Author) error {
+func (r *repository) Update(ctx context.Context, author model.Author) error {
 	q := `UPDATE author
 		  	SET name = $1
 		  WHERE id = $2
@@ -122,7 +133,7 @@ func (r *repository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func NewRepository(client postgresql.Client, logger *logging.Logger) author.Repository {
+func NewRepository(client postgresql.Client, logger *logging.Logger) storage.Repository {
 	return &repository{
 		client: client,
 		logger: logger,
