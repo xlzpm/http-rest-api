@@ -17,3 +17,6 @@ type Repository interface {
 type SortOptions interface {
 	GetOrderBy() string
 }
+
+type FilterOptions interface {
+}

@@ -1,12 +1,16 @@
-package storage
+package model
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/xlzpm/internal/author/storage"
+)
 
 type sortOptions struct {
 	Field, Order string
 }
 
-func NewSortOptions(field, order string) SortOptions {
+func NewSortOptions(field, order string) storage.SortOptions {
 	return &sortOptions{
 		Field: field,
 		Order: order,

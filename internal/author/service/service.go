@@ -6,6 +6,8 @@ import (
 
 	"github.com/xlzpm/internal/author/model"
 	"github.com/xlzpm/internal/author/storage"
+	modelStorage "github.com/xlzpm/internal/author/storage/model"
+	"github.com/xlzpm/pkg/api/filter"
 	"github.com/xlzpm/pkg/api/sort"
 	"github.com/xlzpm/pkg/logging"
 )
@@ -22,8 +24,8 @@ func NewService(repository storage.Repository, logger *logging.Logger) *Service 
 	}
 }
 
-func (s *Service) GetAll(ctx context.Context, sortOptions sort.Options) ([]model.Author, error) {
-	options := storage.NewSortOptions(sortOptions.Field, sortOptions.Order)
+func (s *Service) GetAll(ctx context.Context, filterOptions filter.Options, sortOptions sort.Options) ([]model.Author, error) {
+	options := modelStorage.NewSortOptions(sortOptions.Field, sortOptions.Order)
 
 	all, err := s.repository.FindAll(ctx, options)
 	if err != nil {
