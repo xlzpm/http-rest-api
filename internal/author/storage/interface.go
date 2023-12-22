@@ -6,6 +6,8 @@ import (
 	"github.com/xlzpm/internal/author/model"
 )
 
+//go:generate mockgen -source=interface.go -destination=mocks/mock.go
+
 type Repository interface {
 	Create(ctx context.Context, author *model.Author) error
 	FindAll(ctx context.Context, sortOptions SortOptions) ([]model.Author, error)
